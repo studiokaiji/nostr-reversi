@@ -1,0 +1,1 @@
+type Board = (Disc | null)[][];

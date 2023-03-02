@@ -1,0 +1,1 @@
+type Disc = "b" | "w";
