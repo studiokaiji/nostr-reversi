@@ -39,11 +39,7 @@ export const createRoom = async (privateKey?: string) => {
     sig: await signEvent(unsignedEvent, privateKey),
   };
 
-  console.log(event);
-
   await publish(event, (e) => console.log("aaaa", e));
-
-  console.log("ns");
 
   return event;
 };
@@ -95,6 +91,8 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     };
 
     await publish(event);
+
+    console.log("published", event);
 
     return event;
   };
@@ -223,9 +221,8 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     const joinApplicants = joinRequestEvents.map(({ pubkey }) => pubkey);
 
     if (!gamePutEvents.length) {
-      console.log("hiiii");
       // gameが始まっていない場合
-      return setRoom({
+      const roomData = {
         id: initialEvent.id,
         players: {
           b: initialEvent.pubkey,
@@ -238,7 +235,9 @@ export const useRoom = (roomId = "", privateKey?: string) => {
         owner: initialEvent.pubkey,
         latestEventId: initialEvent.id,
         history: [],
-      });
+      };
+      setRoom(roomData);
+      return roomData;
     }
 
     let isAssignednextCheckPutEvent = false;
@@ -331,8 +330,12 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     return setRoom(room);
   };
 
-  const listenUpdate = async (since: Date) => {
+  const listenUpdate = async (since: Date, currentRoom: Room) => {
     const events: Event[] = [];
+
+    if (room) {
+      currentRoom = room;
+    }
 
     subscribe(
       [
@@ -342,114 +345,124 @@ export const useRoom = (roomId = "", privateKey?: string) => {
           since: getNostrTimestamp(since),
         },
       ],
-      (ev) => {
-        if (!events.find(({ id }) => ev.id === id)) {
-          events.push(ev);
-        }
-      }
-    );
+      async (e) => {
+        console.log(e);
+        if (!events.find(({ id }) => e.id === id)) {
+          const tags = parseTags(e.tags);
+          if (!tags || !tags["e"] || !tags["e"][0]) {
+            console.log("aaaaa");
+            return;
+          }
 
-    setInterval(() => {
-      if (!events.length || !room) return;
+          const body = JSON.parse(e.content) as GameContentBody;
 
-      events.forEach(async (e) => {
-        const tags = parseTags(e.tags);
-
-        const latestEventId = tags["e"][1];
-
-        if (room.latestEventId !== latestEventId) {
-          return;
-        }
-
-        const body = JSON.parse(e.content) as GameContentBody;
-
-        if (room.isGameStarted && body.kind === 1 && body.put.length) {
-          // Put event
-          const ok = putDisc({
-            xIndex: body.put[0],
-            yIndex: body.put[1],
-          });
-          if (!ok) return;
-
-          const newRoom: Room = {
-            ...room,
-            currentPlayer: e.pubkey,
-            lastUpdatedAt: nostrTimestampToDate(e.created_at),
-            history: [...room.history, body.put],
-          };
-
-          return setRoom(newRoom);
-        }
-
-        if (!room.isGameStarted && body.kind === 0) {
-          // JoinRequest and AcceptJoinRequest event
-          const eTags = tags["e"];
-
-          if (
-            eTags.length === 1 &&
-            eTags[0] === roomId &&
-            room.owner !== e.pubkey
-          ) {
-            // JoinRequest
-            const joinApplicants = [
-              ...new Set(room.joinApplicants).add(e.pubkey),
-            ];
+          if (currentRoom.isGameStarted && body.kind === 1 && body.put.length) {
+            // Put event
+            const ok = putDisc({
+              xIndex: body.put[0],
+              yIndex: body.put[1],
+            });
+            if (!ok) return;
 
             const newRoom: Room = {
-              ...room,
-              joinApplicants,
-              latestEventId: e.id || "",
+              ...currentRoom,
+              currentPlayer: e.pubkey,
               lastUpdatedAt: nostrTimestampToDate(e.created_at),
+              history: [...currentRoom.history, body.put],
             };
 
             return setRoom(newRoom);
           }
 
-          if (
-            eTags.length > 1 &&
-            eTags[0] === roomId &&
-            room.owner === e.pubkey
-          ) {
-            // AcceptJoinRequest
-            const opponentPublicKey = tags["p"][0];
-            if (opponentPublicKey && opponentPublicKey !== room.owner && e.id) {
-              await acceptJoinRequest(e.id, opponentPublicKey);
+          if (!currentRoom.isGameStarted && body.kind === 0) {
+            // JoinRequest and AcceptJoinRequest event
+            const eTags = tags["e"];
+
+            console.log("aaadsad");
+            if (
+              eTags.length === 1 &&
+              eTags[0] === roomId &&
+              currentRoom.owner !== e.pubkey
+            ) {
+              // JoinRequest
+              const joinApplicants = [
+                ...new Set(currentRoom.joinApplicants).add(e.pubkey),
+              ];
 
               const newRoom: Room = {
-                ...room,
-                isGameStarted: true,
-                players: {
-                  b: room.owner,
-                  w: e.pubkey,
-                },
-                latestEventId: e.id,
+                ...currentRoom,
+                joinApplicants,
+                latestEventId: e.id || "",
                 lastUpdatedAt: nostrTimestampToDate(e.created_at),
               };
 
-              return setRoom(newRoom);
+              setRoom(newRoom);
+
+              console.log("hiii");
+
+              await acceptJoinRequest(e.id, e.pubkey);
+
+              return room;
+            }
+
+            if (
+              eTags.length > 1 &&
+              eTags[0] === roomId &&
+              currentRoom.owner === e.pubkey
+            ) {
+              // AcceptJoinRequest
+              const opponentPublicKey = tags["p"][0];
+              if (
+                opponentPublicKey &&
+                opponentPublicKey !== currentRoom.owner &&
+                e.id
+              ) {
+                const newRoom: Room = {
+                  ...currentRoom,
+                  isGameStarted: true,
+                  players: {
+                    b: currentRoom.owner,
+                    w: opponentPublicKey,
+                  },
+                  latestEventId: e.id,
+                  lastUpdatedAt: nostrTimestampToDate(e.created_at),
+                };
+
+                return setRoom(newRoom);
+              }
             }
           }
         }
-      });
-    }, 100);
+      }
+    );
   };
 
-  const { data: room, setRoom } = useLocalRoomStore(roomId);
+  const { room, setRoom } = useLocalRoomStore(roomId);
 
   useEffect(() => {
     if (!window || !roomId) {
       return;
     }
-    console.log("a");
+
+    let isCalledHandler = false;
+
     const handler = () => {
-      console.log("aag");
+      if (isCalledHandler) {
+        return;
+      }
+      isCalledHandler = true;
       getCurrentData(room?.lastUpdatedAt).then((room) => {
         if (!room) return;
-        listenUpdate(room.lastUpdatedAt);
+        listenUpdate(room.lastUpdatedAt, room);
       });
     };
-    window.addEventListener("load", handler);
-    return () => window.removeEventListener("load", handler);
+
+    if ((window as any).nostr) {
+      handler();
+    } else {
+      window.addEventListener("load", handler);
+      return () => window.removeEventListener("load", handler);
+    }
   }, [window, roomId]);
 
   const currentDisc: Disc = useMemo(() => {

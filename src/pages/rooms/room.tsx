@@ -21,28 +21,33 @@ export const RoomPage = () => {
     }
 
     const handler = () => {
+      getPublicKey().then(setPublicKey);
       if (!roomId) {
         createRoom().then((ev) => {
-          console.log("hi");
           navigate(`/rooms/${ev.id}`);
         });
       }
     };
 
+    if ((window as any).nostr) {
+      handler();
+    }
+
     window.addEventListener("load", handler);
     return () => window.removeEventListener("load", handler);
-  }, [window]);
+  }, [window, roomId]);
+
+  const [joinRequestStatus, setJoinRequestStatus] = useState<
+    "sending" | "sent"
+  >();
 
   useEffect(() => {
-    if (!room) return;
-    console.log("room", room);
-    getPublicKey().then(async (pubKey) => {
-      setPublicKey(pubKey);
-      if (!room.isGameStarted && pubKey !== room.owner) {
-        await joinRequest();
-      }
-    });
-  }, [room]);
+    if (!room || !publicKey || joinRequestStatus === "sent") return;
+    if (!room.isGameStarted && publicKey !== room.owner) {
+      setJoinRequestStatus("sending");
+      joinRequest().then(() => setJoinRequestStatus("sent"));
+    }
+  }, [room, publicKey]);
 
   if (!room) {
     if (!roomId) {
@@ -50,6 +55,10 @@ export const RoomPage = () => {
     } else {
       return <div>Joining</div>;
     }
+  }
+
+  if (joinRequestStatus === "sending") {
+    return <div>Sending Join Request...</div>;
   }
 
   return (
@@ -84,7 +93,9 @@ export const RoomPage = () => {
         <div css={{ margin: "0 auto" }}>
           <Reversi
             player={currentDisc}
-            disabled={!room || room.currentPlayer !== ""}
+            disabled={
+              !room || !room.isGameStarted || room.currentPlayer !== publicKey
+            }
             board={board}
             putablePosition={putablePosition}
             onClickSquare={(pos) => put(pos)}
