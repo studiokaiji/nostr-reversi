@@ -25,17 +25,19 @@ export const Reversi = ({
         position: "relative",
       }}
     >
-      <div
-        css={{
-          background: "rgba(256,256,256,0.4)",
-          width: "100%",
-          height: "100%",
-          position: "absolute",
-          top: 0,
-          left: 0,
-          zIndex: 1,
-        }}
-      />
+      {disabled && (
+        <div
+          css={{
+            background: "rgba(256,256,256,0.4)",
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            zIndex: 1,
+          }}
+        />
+      )}
       {rowArr.map((row) => (
         <Row
           key={row}
