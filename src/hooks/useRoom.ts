@@ -17,7 +17,6 @@ const initialContentBody: GameContentBody = {
   kind: 0,
   put: [],
   boardState: formatBoardState(),
-  history: [],
 };
 
 export const createRoom = async (privateKey?: string) => {
@@ -125,7 +124,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       boardState: formatBoardState(board),
       kind: 1,
       put: [put.xIndex, put.yIndex],
-      history: [...room.history, [put.xIndex, put.yIndex]],
     };
 
     const unsignedEvent: UnsignedEvent = {
@@ -144,8 +142,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       id: getEventHash(unsignedEvent),
       sig: await signEvent(unsignedEvent, privateKey),
     };
-
-    console.log("PUT EVENT", event);
 
     const newRoom: Room = {
       ...room,
@@ -253,7 +249,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
         joinApplicants,
         owner: initialEvent.pubkey,
         latestEventId: initialEvent.id,
-        history: [],
       };
 
       isGameStartedRef.current = false;
@@ -346,7 +341,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       joinApplicants,
       owner: initialEvent.pubkey,
       latestEventId: lastCheckPassedPutEvent.id,
-      history: [],
     };
 
     isGameStartedRef.current = !!gamePutEvents.length;
@@ -358,7 +352,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     const events: Event[] = [];
 
     if (room) {
-      console.log("assigned");
       currentRoom = room;
     }
 
@@ -374,10 +367,9 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       ],
       async (e) => {
         if (!events.find(({ id }) => e.id === id)) {
-          console.log(e);
+          console.log("NEW EVENT", e);
           const tags = parseTags(e.tags);
           if (!tags || !tags["e"] || !tags["e"][0]) {
-            console.log("aaaaa");
             return;
           }
 
@@ -389,10 +381,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
             body.put.length &&
             e.pubkey !== myPubkey
           ) {
-            console.log("PUT");
-
-            console.log(currentPlayerDisc);
-
             // Put event
             const ok = putDisc({
               xIndex: body.put[0],
@@ -405,18 +393,11 @@ export const useRoom = (roomId = "", privateKey?: string) => {
 
             const opponentPublicKey = e.pubkey;
 
-            console.log(
-              "currentRoom.owner, opponentPublicKey, myPubkey",
-              currentRoom.owner,
-              opponentPublicKey,
-              myPubkey
-            );
-
             const newRoom: Room = {
               ...currentRoom,
+              latestEventId: e.id,
               currentPlayer: myPubkey,
               lastUpdatedAt: nostrTimestampToDate(e.created_at),
-              history: [...currentRoom.history, body.put],
               isGameStarted: true,
               players: {
                 b: currentRoom.owner,
@@ -427,8 +408,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
               },
             };
 
-            console.log(newRoom);
-
             return setRoom(newRoom);
           }
 
@@ -436,7 +415,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
             // JoinRequest and AcceptJoinRequest event
             const eTags = tags["e"];
 
-            console.log("aaadsad");
             if (
               eTags.length === 1 &&
               eTags[0] === roomId &&
@@ -455,8 +433,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
               };
 
               setRoom(newRoom);
-
-              console.log("hiii");
 
               await acceptJoinRequest(e.id, e.pubkey);
 

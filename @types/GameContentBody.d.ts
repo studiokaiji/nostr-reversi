@@ -3,5 +3,4 @@ type GameContentBody = {
   kind: number;
   put: [number, number] | [];
   boardState: string;
-  history: [number, number][];
 };

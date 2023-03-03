@@ -10,5 +10,4 @@ type Room = {
   lastUpdatedAt: Date;
   joinApplicants: string[];
   latestEventId: string;
-  history: [number, number][];
 };
