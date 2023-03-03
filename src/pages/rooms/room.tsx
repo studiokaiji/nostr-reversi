@@ -7,7 +7,7 @@ import { Reversi } from "@/components/Reversi";
 export const RoomPage = () => {
   const { roomId } = useParams();
 
-  const { joinRequest, room, board, putablePosition, currentDisc, put } =
+  const { joinRequest, room, board, putablePosition, currentPlayerDisc, put } =
     useRoom(roomId);
 
   const { getPublicKey } = useUserKey();
@@ -89,10 +89,10 @@ export const RoomPage = () => {
         <pre css={{ textAlign: "left" }}>
           Room: {JSON.stringify(room, null, 2)}
         </pre>
-        <div>Disc: {currentDisc}</div>
+        <div>Disc: {currentPlayerDisc}</div>
         <div css={{ margin: "0 auto" }}>
           <Reversi
-            player={currentDisc}
+            player={currentPlayerDisc}
             disabled={
               !room || !room.isGameStarted || room.currentPlayer !== publicKey
             }

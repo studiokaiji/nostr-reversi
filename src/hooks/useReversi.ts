@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const INITIAL_BOARD = (() => {
   const board: (null | Disc)[][] = Array.from(new Array(8), () =>
@@ -14,10 +14,10 @@ const INITIAL_BOARD = (() => {
 export const useReversi = (firstPlayerDisc: Disc = "b") => {
   const [board, setBoard] = useState(INITIAL_BOARD);
 
-  const [currentPlayerDisc, setCurrentPlayerDisc] =
-    useState<Disc>(firstPlayerDisc);
+  const playerDiscRef = useRef<Disc>(firstPlayerDisc);
+
   const changePlayer = () => {
-    setCurrentPlayerDisc(currentPlayerDisc === "b" ? "w" : "b");
+    playerDiscRef.current = playerDiscRef.current === "b" ? "w" : "b";
   };
 
   const [isEnd, setIsEnd] = useState(false);
@@ -28,16 +28,22 @@ export const useReversi = (firstPlayerDisc: Disc = "b") => {
 
   useEffect(() => {
     if (!window) return;
-    setPutablePosition(getPutablePosition(currentPlayerDisc));
-  }, [currentPlayerDisc, board, window]);
+    setPutablePosition(getPutablePosition(playerDiscRef.current));
+  }, [playerDiscRef.current, board, window]);
+
+  const isInitialCall = useRef(true);
 
   useEffect(() => {
+    if (isInitialCall) {
+      isInitialCall.current = false;
+      return;
+    }
     if (putablePosition.length > 0) return;
 
     // 双方ともに石を置けなくなった場合
     if (
       putablePosition.length < 1 &&
-      !getPutablePosition(currentPlayerDisc === "b" ? "w" : "b").length
+      !getPutablePosition(playerDiscRef.current === "b" ? "w" : "b").length
     ) {
       setIsEnd(true);
       return;
@@ -52,13 +58,15 @@ export const useReversi = (firstPlayerDisc: Disc = "b") => {
   }, [putablePosition]);
 
   const putDisc = ({ xIndex, yIndex }: Position) => {
+    console.log(playerDiscRef.current);
+
     // 既に石が置いてあれば処理を終了
     if (board[yIndex][xIndex]) {
       return false;
     }
 
     //判定
-    const willBeReturned = checkDisc(currentPlayerDisc, { yIndex, xIndex });
+    const willBeReturned = checkDisc(playerDiscRef.current, { yIndex, xIndex });
 
     // 1つも石を返せなければ処理を終了
     if (willBeReturned.length === 0) {
@@ -67,14 +75,16 @@ export const useReversi = (firstPlayerDisc: Disc = "b") => {
 
     // 問題なければ石を置く
     const newBoard = [...board];
-    newBoard[yIndex][xIndex] = currentPlayerDisc;
+    newBoard[yIndex][xIndex] = playerDiscRef.current;
 
     // 置いた石との間にある石を返す
     for (let i = 0, l = willBeReturned.length; i < l; i++) {
-      newBoard[willBeReturned[i][0]][willBeReturned[i][1]] = currentPlayerDisc;
+      newBoard[willBeReturned[i][0]][willBeReturned[i][1]] =
+        playerDiscRef.current;
     }
 
     setBoard(newBoard);
+    changePlayer();
 
     return true;
   };
@@ -212,7 +222,7 @@ export const useReversi = (firstPlayerDisc: Disc = "b") => {
     board,
     setBoard,
     numberOfDiscs,
-    currentPlayerDisc,
+    currentPlayerDisc: playerDiscRef.current,
     isEnd,
     putablePosition,
   };

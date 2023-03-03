@@ -19,13 +19,15 @@ export const parseBoardState = (formattedBoardState: string): Board => {
 };
 
 export const formatBoardState = (board: Board = []) => {
-  if (board.length < 1) {
-    board = [...new Array(64)].fill(null);
-  } else if (board.length !== 64) {
+  let flattenBoard = board.flat();
+
+  if (flattenBoard.length < 1) {
+    flattenBoard = [...new Array(64)].fill(null);
+  } else if (flattenBoard.length !== 64) {
     throw Error("Invalid board length");
   }
 
-  return board.flat().reduce<string>((prev, square) => {
+  return flattenBoard.reduce<string>((prev, square) => {
     if (!square) {
       return (prev += "0");
     }

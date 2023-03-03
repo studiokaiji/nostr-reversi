@@ -1,7 +1,7 @@
 import { useLocalRoomStore } from "./useLocalRoomStore";
 import { useRelays } from "./useRelays";
 import { CONTENT_BODY_VERSION, KIND } from "./../constants/nostr";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Event, getEventHash, UnsignedEvent } from "nostr-tools";
 import { useUserKey } from "./useUserKey";
 import {
@@ -39,7 +39,7 @@ export const createRoom = async (privateKey?: string) => {
     sig: await signEvent(unsignedEvent, privateKey),
   };
 
-  await publish(event, (e) => console.log("aaaa", e));
+  await publish(event);
 
   return event;
 };
@@ -92,22 +92,27 @@ export const useRoom = (roomId = "", privateKey?: string) => {
 
     await publish(event);
 
-    console.log("published", event);
-
     return event;
   };
 
-  const { putDisc, getPutablePosition, board, putablePosition } = useReversi();
+  const {
+    putDisc,
+    getPutablePosition,
+    board,
+    putablePosition,
+    currentPlayerDisc,
+  } = useReversi();
 
   const put = async (put: Position) => {
     if (!room) {
       throw Error("room data is undefined.");
     }
 
+    const publicKey = await getPublicKey();
+
     const ok = putDisc(put);
     if (!ok) throw 0;
 
-    const publicKey = await getPublicKey();
     const opponentPublicKey =
       room.players[
         (Object.keys(room?.players) as Disc[]).filter(
@@ -120,7 +125,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       boardState: formatBoardState(board),
       kind: 1,
       put: [put.xIndex, put.yIndex],
-      history: room.history,
+      history: [...room.history, [put.xIndex, put.yIndex]],
     };
 
     const unsignedEvent: UnsignedEvent = {
@@ -139,6 +144,20 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       id: getEventHash(unsignedEvent),
       sig: await signEvent(unsignedEvent, privateKey),
     };
+
+    console.log("PUT EVENT", event);
+
+    const newRoom: Room = {
+      ...room,
+      isGameStarted: true,
+      currentPlayer: opponentPublicKey,
+      latestEventId: event.id,
+      lastUpdatedAt: nostrTimestampToDate(event.created_at),
+    };
+
+    isGameStartedRef.current = true;
+
+    setRoom(newRoom);
 
     await publish(event);
 
@@ -236,6 +255,9 @@ export const useRoom = (roomId = "", privateKey?: string) => {
         latestEventId: initialEvent.id,
         history: [],
       };
+
+      isGameStartedRef.current = false;
+
       setRoom(roomData);
       return roomData;
     }
@@ -327,6 +349,8 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       history: [],
     };
 
+    isGameStartedRef.current = !!gamePutEvents.length;
+
     return setRoom(room);
   };
 
@@ -334,8 +358,11 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     const events: Event[] = [];
 
     if (room) {
+      console.log("assigned");
       currentRoom = room;
     }
+
+    const myPubkey = await getPublicKey();
 
     subscribe(
       [
@@ -346,8 +373,8 @@ export const useRoom = (roomId = "", privateKey?: string) => {
         },
       ],
       async (e) => {
-        console.log(e);
         if (!events.find(({ id }) => e.id === id)) {
+          console.log(e);
           const tags = parseTags(e.tags);
           if (!tags || !tags["e"] || !tags["e"][0]) {
             console.log("aaaaa");
@@ -356,25 +383,56 @@ export const useRoom = (roomId = "", privateKey?: string) => {
 
           const body = JSON.parse(e.content) as GameContentBody;
 
-          if (currentRoom.isGameStarted && body.kind === 1 && body.put.length) {
+          if (
+            isGameStartedRef.current &&
+            body.kind === 1 &&
+            body.put.length &&
+            e.pubkey !== myPubkey
+          ) {
+            console.log("PUT");
+
+            console.log(currentPlayerDisc);
+
             // Put event
             const ok = putDisc({
               xIndex: body.put[0],
               yIndex: body.put[1],
             });
-            if (!ok) return;
+            if (!ok) {
+              console.error("Don't accept oppotunity put event");
+              return;
+            }
+
+            const opponentPublicKey = e.pubkey;
+
+            console.log(
+              "currentRoom.owner, opponentPublicKey, myPubkey",
+              currentRoom.owner,
+              opponentPublicKey,
+              myPubkey
+            );
 
             const newRoom: Room = {
               ...currentRoom,
-              currentPlayer: e.pubkey,
+              currentPlayer: myPubkey,
               lastUpdatedAt: nostrTimestampToDate(e.created_at),
               history: [...currentRoom.history, body.put],
+              isGameStarted: true,
+              players: {
+                b: currentRoom.owner,
+                w:
+                  opponentPublicKey === currentRoom.owner
+                    ? myPubkey
+                    : opponentPublicKey,
+              },
             };
+
+            console.log(newRoom);
 
             return setRoom(newRoom);
           }
 
-          if (!currentRoom.isGameStarted && body.kind === 0) {
+          if (!isGameStartedRef.current && body.kind === 0) {
             // JoinRequest and AcceptJoinRequest event
             const eTags = tags["e"];
 
@@ -428,6 +486,8 @@ export const useRoom = (roomId = "", privateKey?: string) => {
                   lastUpdatedAt: nostrTimestampToDate(e.created_at),
                 };
 
+                isGameStartedRef.current = true;
+
                 return setRoom(newRoom);
               }
             }
@@ -438,6 +498,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
   };
 
   const { room, setRoom } = useLocalRoomStore(roomId);
+  const isGameStartedRef = useRef(false);
 
   useEffect(() => {
     if (!window || !roomId) {
@@ -465,10 +526,5 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     }
   }, [window, roomId]);
 
-  const currentDisc: Disc = useMemo(() => {
-    if (!room) return "b";
-    return room.currentPlayer === room.owner ? "b" : "w";
-  }, [room]);
-
-  return { joinRequest, put, room, board, putablePosition, currentDisc };
+  return { joinRequest, put, room, board, putablePosition, currentPlayerDisc };
 };
