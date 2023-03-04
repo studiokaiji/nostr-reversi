@@ -30,7 +30,7 @@ export const useRelays = (otherRelays: string[] = []) => {
   };
 
   const list = async (filters: Filter[]) => {
-    return pool.list(relays, filters);
+    return pool.list(allRelays, filters);
   };
 
   const publish = async (
