@@ -3,6 +3,7 @@ import { useUserKey } from "@/hooks/useUserKey";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Reversi } from "@/components/Reversi";
+import { NothelloLogo } from "@/components/helpers/NothelloLogo";
 
 export const RoomPage = () => {
   const { roomId } = useParams();
@@ -63,20 +64,7 @@ export const RoomPage = () => {
 
   return (
     <div>
-      <div>
-        <h1 css={{ wordWrap: "break-word" }}>
-          <div
-            css={{
-              letterSpacing: "-0.25em",
-              marginRight: 20,
-            }}
-          >
-            ⚪️⚫️
-          </div>
-          nothello
-        </h1>
-        <p>Reversi working on Nostr.</p>
-      </div>
+      <NothelloLogo />
       <div>{}</div>
       <div
         css={{
