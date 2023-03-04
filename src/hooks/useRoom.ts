@@ -1,8 +1,13 @@
+import { sha256 } from "./../utils/sha256";
 import { useOnReadyNostrClient } from "./useOnReadyNostrClient";
 import { useLocalRoomStore } from "./useLocalRoomStore";
 import { useRelays } from "./useRelays";
-import { CONTENT_BODY_VERSION, KIND } from "./../constants/nostr";
-import { useEffect, useMemo, useRef } from "react";
+import {
+  CONTENT_BODY_VERSION,
+  CREATE_ROOM_E_TAG,
+  KIND,
+} from "./../constants/nostr";
+import { useEffect, useRef } from "react";
 import { Event, getEventHash, UnsignedEvent } from "nostr-tools";
 import { useUserKey } from "./useUserKey";
 import {
@@ -28,7 +33,7 @@ export const createRoom = async (privateKey?: string) => {
   const unsignedEvent: UnsignedEvent = {
     kind: KIND,
     pubkey: await getPublicKey(privateKey),
-    tags: [],
+    tags: [["e", CREATE_ROOM_E_TAG]],
     content: JSON.stringify(initialContentBody),
     created_at: getNostrTimestamp(),
   };
@@ -98,6 +103,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
   const {
     putDisc,
     getPutablePosition,
+    numberOfDiscs,
     board,
     putablePosition,
     currentPlayerDisc,
@@ -487,5 +493,13 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     });
   }, [roomId]);
 
-  return { joinRequest, put, room, board, putablePosition, currentPlayerDisc };
+  return {
+    joinRequest,
+    put,
+    room,
+    board,
+    putablePosition,
+    currentPlayerDisc,
+    numberOfDiscs,
+  };
 };
