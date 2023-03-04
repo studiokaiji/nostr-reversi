@@ -1,16 +1,9 @@
-import { css } from "@emotion/react";
+import { Disc } from "../helpers/Disc";
 
 type SquareProps = {
   value: Disc | null;
   isPutableDisc: boolean;
 } & Omit<JSX.IntrinsicElements["button"], "value">;
-
-const discCss = css({
-  width: 30,
-  height: 30,
-  borderRadius: "50%",
-  margin: 4,
-});
 
 export const Square = (props: SquareProps) => {
   return (
@@ -34,13 +27,13 @@ export const Square = (props: SquareProps) => {
       }}
       value={undefined}
     >
-      {props.value === "b" ? (
-        <div css={[discCss, { backgroundColor: "#000" }]} />
-      ) : props.value === "w" ? (
-        <div css={[discCss, { backgroundColor: "#fff" }]} />
-      ) : (
-        <div css={discCss} />
-      )}
+      <div css={{ margin: 4 }}>
+        {props.value ? (
+          <Disc color={props.value} />
+        ) : (
+          <div css={{ width: 30, height: 30 }} />
+        )}
+      </div>
     </button>
   );
 };
