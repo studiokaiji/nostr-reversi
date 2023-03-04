@@ -1,3 +1,4 @@
+import { useOnReadyNostrClient } from "./useOnReadyNostrClient";
 import { useLocalRoomStore } from "./useLocalRoomStore";
 import { useRelays } from "./useRelays";
 import { CONTENT_BODY_VERSION, KIND } from "./../constants/nostr";
@@ -476,31 +477,15 @@ export const useRoom = (roomId = "", privateKey?: string) => {
   const { room, setRoom } = useLocalRoomStore(roomId);
   const isGameStartedRef = useRef(false);
 
-  useEffect(() => {
-    if (!window || !roomId) {
+  useOnReadyNostrClient(() => {
+    if (!roomId) {
       return;
     }
-
-    let isCalledHandler = false;
-
-    const handler = () => {
-      if (isCalledHandler) {
-        return;
-      }
-      isCalledHandler = true;
-      getCurrentData(room?.lastUpdatedAt).then((room) => {
-        if (!room) return;
-        listenUpdate(room.lastUpdatedAt, room);
-      });
-    };
-
-    if ((window as any).nostr) {
-      handler();
-    } else {
-      window.addEventListener("load", handler);
-      return () => window.removeEventListener("load", handler);
-    }
-  }, [window, roomId]);
+    getCurrentData(room?.lastUpdatedAt).then((room) => {
+      if (!room) return;
+      listenUpdate(room.lastUpdatedAt, room);
+    });
+  }, [roomId]);
 
   return { joinRequest, put, room, board, putablePosition, currentPlayerDisc };
 };

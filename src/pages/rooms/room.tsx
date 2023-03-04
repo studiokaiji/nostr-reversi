@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Reversi } from "@/components/Reversi";
 import { NothelloLogo } from "@/components/helpers/NothelloLogo";
+import { useOnReadyNostrClient } from "@/hooks/useOnReadyNostrClient";
 
 export const RoomPage = () => {
   const { roomId } = useParams();
@@ -16,26 +17,13 @@ export const RoomPage = () => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!window) {
-      return;
+  useOnReadyNostrClient(() => {
+    getPublicKey().then(setPublicKey);
+    if (!roomId) {
+      createRoom().then((ev) => {
+        navigate(`/rooms/${ev.id}`);
+      });
     }
-
-    const handler = () => {
-      getPublicKey().then(setPublicKey);
-      if (!roomId) {
-        createRoom().then((ev) => {
-          navigate(`/rooms/${ev.id}`);
-        });
-      }
-    };
-
-    if ((window as any).nostr) {
-      handler();
-    }
-
-    window.addEventListener("load", handler);
-    return () => window.removeEventListener("load", handler);
   }, [window, roomId]);
 
   const [joinRequestStatus, setJoinRequestStatus] = useState<
