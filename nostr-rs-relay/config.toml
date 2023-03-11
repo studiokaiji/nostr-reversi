@@ -134,7 +134,7 @@ reject_future_seconds = 1800
 #]
 
 # Event kind allowlist. Events other than these kinds will be discarded.
-event_kind_allowlist = [64]
+event_kind_allowlist = [6464]
 
 [authorization]
 # Pubkey addresses in this array are whitelisted for event publishing.
