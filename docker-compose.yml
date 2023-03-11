@@ -2,14 +2,11 @@ version: '3.7'
 
 services:
   nostr-relay:
-    image: scsibug/nostr-rs-relay
+    image: scsibug/nostr-rs-relay:latest
     ports:
       - 7000:8080
     volumes: 
-      - nostr-rs-relay-local-data:/usr/src/app/db
+      - ./nostr-rs-relay/data:/usr/src/app/db
       - ./nostr-rs-relay/config.toml:/usr/src/app/config.toml
     user: root
-    restart: always
-
-volumes:
-  nostr-rs-relay-local-data:
+    container_name: nostr-reversi-relay
