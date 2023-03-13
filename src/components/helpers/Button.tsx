@@ -13,7 +13,7 @@ export const Button = <T extends string | undefined>(
     outline: "none",
     cursor: "pointer",
     backgroundColor: props.outlined ? "white" : "black",
-    padding: "0.7rem 1.4rem",
+    padding: "0.7rem 1.2rem",
     fontSize: "1rem",
     fontWeight: 600,
     color: props.outlined ? "black" : "white",
