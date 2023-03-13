@@ -48,7 +48,7 @@ Nothello payload is stored as a string in the content of the Nostr event.
 Before starting a game, three events must be executed.
 
 1. `createRoom`
-create game room. A room creation event is issued only once, No need to include anything in tags.
+create game room. A room creation event is issued only once, `4669c3a8f4de837bd899f7069591978fa7c5d96caa7c7c1507a6678332543cc2`(open room tag) must be included in the `e` tag.
 2. `joinRequest`
 Join request. The request must be made by someone other than the room creator.
  `roomId` (= `createRoom` event id) must be included in the `e` tag.
