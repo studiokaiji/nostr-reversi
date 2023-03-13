@@ -6,7 +6,7 @@ import {
   CREATE_ROOM_E_TAG,
   KIND,
 } from "./../constants/nostr";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { Event, getEventHash, UnsignedEvent } from "nostr-tools";
 import { useUserKey } from "./useUserKey";
 import {
