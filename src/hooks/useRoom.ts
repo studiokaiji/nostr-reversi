@@ -265,8 +265,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     }
 
     // ゲームが始まっている場合
-    // TODO: 復帰のための処理を書く
-
     let isAssignednextCheckPutEvent = false;
 
     let nextCheckPutEvent: Event = gamePutEvents[0];
