@@ -1,4 +1,3 @@
-import { sha256 } from "./../utils/sha256";
 import { useOnReadyNostrClient } from "./useOnReadyNostrClient";
 import { useLocalRoomStore } from "./useLocalRoomStore";
 import { useRelays } from "./useRelays";
@@ -194,6 +193,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       {}
     );
 
+    const acceptEvents: Event[] = [];
     let acceptedOpponentPublicKey = "";
     const joinRequestEvents: Event[] = [];
 
@@ -206,13 +206,12 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       const tags = parseTags(ev.tags);
       const body = gameContentBodyMap[id];
 
-      const eTags = tags["e"];
 
       if (body.kind === 0) {
         // join request event
         if (
-          eTags.length === 1 &&
-          eTags[0] === roomId &&
+          tags["e"].length === 1 &&
+          tags["e"][0] === roomId &&
           initialEvent.pubkey !== ev.pubkey
         ) {
           joinRequestEvents.push(ev);
@@ -221,11 +220,12 @@ export const useRoom = (roomId = "", privateKey?: string) => {
 
         // accept event
         if (
-          tags["p"] &&
-          eTags.length > 1 &&
-          eTags[0] === roomId &&
+          tags["p"].length &&
+          tags["e"].length > 1 &&
+          tags["e"][0] === roomId &&
           initialEvent.pubkey === ev.pubkey
         ) {
+          acceptEvents.push(ev);
           acceptedOpponentPublicKey = tags["p"][0];
           return;
         }
@@ -264,6 +264,9 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       return roomData;
     }
 
+    // ゲームが始まっている場合
+    // TODO: 復帰のための処理を書く
+
     let isAssignednextCheckPutEvent = false;
 
     let nextCheckPutEvent: Event = gamePutEvents[0];
@@ -271,12 +274,11 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     const idToPutEventMap: { [id: string]: Event } = {};
 
     for (const putEv of gamePutEvents) {
-      const eTags = putEv.tags.filter((tagList) => tagList[0] === "e")[0];
+      const { e: eTags } = parseTags(putEv.tags);
 
-      // 最初のputEvent(tag: eのlengthが一つかつルームオーナーが投稿したノートの場合)を取得
+      // 最初のputEventを取得
       if (
-        eTags.length < 2 &&
-        eTags[0] &&
+        acceptEvents.findIndex(({ id }) => eTags[1] === id) !== -1 &&
         putEv.pubkey === initialEvent.pubkey
       ) {
         nextCheckPutEvent = putEv;
@@ -293,7 +295,10 @@ export const useRoom = (roomId = "", privateKey?: string) => {
 
     const hitsory: number[][] = [];
 
-    while (checkedPutEvents.length <= gamePutEvents.length) {
+    while (
+      checkedPutEvents.length <= gamePutEvents.length &&
+      nextCheckPutEvent
+    ) {
       const id = nextCheckPutEvent.id;
 
       const disc = nextCheckPutEvent.pubkey === initialEvent.pubkey ? "b" : "w";
