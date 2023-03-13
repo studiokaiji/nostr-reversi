@@ -8,6 +8,7 @@ import { useOnReadyNostrClient } from "@/hooks/useOnReadyNostrClient";
 import { useUserProfiles } from "@/hooks/useUserProfiles";
 import { ProfileCard } from "@/components/helpers/ProfileCard";
 import { nip19 } from "nostr-tools";
+import { CopyShareUrl } from "@/components/helpers/CopyShereUrl";
 
 export const RoomPage = () => {
   const { roomId } = useParams();
@@ -120,6 +121,7 @@ export const RoomPage = () => {
             onClickSquare={(pos) => put(pos)}
           />
         </div>
+        <CopyShareUrl url={location.href} />
       </div>
     </div>
   );
