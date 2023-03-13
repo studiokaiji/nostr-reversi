@@ -45,23 +45,3 @@ h1 {
     color: #4d555a;
   }
 }
-
-button {
-  border: 2px solid black;
-  outline: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  user-select: none;
-  cursor: pointer;
-  background-color: black;
-  padding: 0.7rem 1.4rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: white;
-}
-
-button.outlined {
-  background-color: white;
-  color: black;
-}
