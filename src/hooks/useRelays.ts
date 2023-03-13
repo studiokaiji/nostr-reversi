@@ -1,11 +1,12 @@
 import { Event, Filter, Pub, relayInit, SimplePool } from "nostr-tools";
 
-const relays = ["ws://127.0.0.1:7000"];
-
 const pool = new SimplePool();
 
 export const useRelays = (otherRelays: string[] = []) => {
-  const allRelays = [...relays, ...otherRelays];
+  const allRelays = [
+    ...JSON.parse(import.meta.env.VITE_RELAYS),
+    ...otherRelays,
+  ];
 
   const subscribe = (
     filters: Filter[],
