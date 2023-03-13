@@ -31,9 +31,9 @@ export const ProfileCard = ({
     rel="noopener noreferrer"
   >
     {disc && <Disc color={disc} isDisplayBorder />}
-    {profile?.picture ? (
+    {profile ? (
       <img
-        src={profile?.picture}
+        src={profile?.picture || ""}
         width={42}
         height={42}
         css={{ borderRadius: "2px" }}
