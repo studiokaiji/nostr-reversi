@@ -36,12 +36,11 @@ h1 {
   margin: 0;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: black;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #4d555a;
-  }
+:root {
+  color: black;
+  background-color: #ffffff;
+}
+
+a:hover {
+  color: #4d555a;
 }
