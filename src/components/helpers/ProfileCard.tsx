@@ -5,7 +5,7 @@ type ProfileCardProps = {
   disc?: Disc;
   profile: Profile;
   npub: string;
-  numberOfDisc: number;
+  numberOfDisc?: number;
 };
 
 export const ProfileCard = ({
@@ -41,6 +41,6 @@ export const ProfileCard = ({
     ) : (
       <Skeleton width={42} height={42} borderRadius="2px" />
     )}
-    <div css={{ color: "black" }}>{numberOfDisc}</div>
+    {numberOfDisc && <div css={{ color: "black" }}>{numberOfDisc}</div>}
   </a>
 );
