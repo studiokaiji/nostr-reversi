@@ -1,15 +1,5 @@
+import { INITIAL_BOARD } from "@/constants/reversi";
 import { useEffect, useMemo, useRef, useState } from "react";
-
-const INITIAL_BOARD = (() => {
-  const board: (null | Disc)[][] = Array.from(new Array(8), () =>
-    new Array(8).fill(0).map(() => null)
-  );
-  board[3][3] = "b";
-  board[3][4] = "w";
-  board[4][3] = "b";
-  board[4][4] = "w";
-  return board;
-})();
 
 export const useReversi = (firstPlayerDisc: Disc = "b") => {
   const [board, setBoard] = useState(INITIAL_BOARD);
@@ -58,8 +48,6 @@ export const useReversi = (firstPlayerDisc: Disc = "b") => {
   }, [putablePosition]);
 
   const putDisc = ({ xIndex, yIndex }: Position) => {
-    console.log(playerDiscRef.current);
-
     // 既に石が置いてあれば処理を終了
     if (board[yIndex][xIndex]) {
       return false;

@@ -1,3 +1,5 @@
+import { INITIAL_BOARD } from "@/constants/reversi";
+
 export const parseBoardState = (formattedBoardState: string): Board => {
   const flatten = formattedBoardState.split("").map((strSq) => {
     if (strSq === "0") {
@@ -22,7 +24,7 @@ export const formatBoardState = (board: Board = []) => {
   let flattenBoard = board.flat();
 
   if (flattenBoard.length < 1) {
-    flattenBoard = [...new Array(64)].fill(null);
+    flattenBoard = INITIAL_BOARD.flat();
   } else if (flattenBoard.length !== 64) {
     throw Error("Invalid board length");
   }
