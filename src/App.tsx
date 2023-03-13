@@ -1,4 +1,5 @@
 import "./App.css";
+import "react-loading-skeleton/dist/skeleton.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { IndexPage } from "./pages";
 import { RoomPage } from "./pages/rooms/room";
