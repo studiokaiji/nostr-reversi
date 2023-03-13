@@ -1,19 +1,36 @@
 import { createRoom, useRoom } from "@/hooks/useRoom";
 import { useUserKey } from "@/hooks/useUserKey";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Reversi } from "@/components/Reversi";
 import { NothelloLogo } from "@/components/helpers/NothelloLogo";
 import { useOnReadyNostrClient } from "@/hooks/useOnReadyNostrClient";
+import { useUserProfiles } from "@/hooks/useUserProfiles";
+import { ProfileCard } from "@/components/helpers/ProfileCard";
+import { nip19 } from "nostr-tools";
 
 export const RoomPage = () => {
   const { roomId } = useParams();
 
-  const { joinRequest, room, board, putablePosition, currentPlayerDisc, put } =
-    useRoom(roomId);
+  const {
+    joinRequest,
+    room,
+    board,
+    putablePosition,
+    currentPlayerDisc,
+    put,
+    numberOfDiscs,
+  } = useRoom(roomId);
 
   const { getPublicKey } = useUserKey();
   const [publicKey, setPublicKey] = useState("");
+
+  const publicKeys = useMemo(
+    () => Object.values(room?.players || []).filter((v) => v),
+    [room?.players]
+  );
+
+  const { profiles, isLoading: isLoadingProfile } = useUserProfiles(publicKeys);
 
   const navigate = useNavigate();
 
@@ -62,10 +79,36 @@ export const RoomPage = () => {
           gap: 12,
         }}
       >
-        <pre css={{ textAlign: "left" }}>
-          Room: {JSON.stringify(room, null, 2)}
-        </pre>
-        <div>Disc: {currentPlayerDisc}</div>
+        <div
+          css={{
+            display: "flex",
+            gap: "20px",
+            alignItems: "center",
+            fontWeight: 500,
+            margin: "0 auto",
+          }}
+        >
+          {room?.players.b && (
+            <ProfileCard
+              profile={profiles[0]}
+              npub={nip19.npubEncode(room?.players.b)}
+              disc="b"
+              numberOfDisc={numberOfDiscs.b}
+            />
+          )}
+          {room?.players.w && (
+            <>
+              <p>VS</p>
+              <ProfileCard
+                profile={profiles[1]}
+                npub={nip19.npubEncode(room?.players.w)}
+                disc="w"
+                numberOfDisc={numberOfDiscs.w}
+              />
+            </>
+          )}
+        </div>
+        <div>Disc: {currentPlayerDisc === "b" ? "●" : "○"}</div>
         <div css={{ margin: "0 auto" }}>
           <Reversi
             player={currentPlayerDisc}
