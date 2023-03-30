@@ -217,8 +217,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
           return;
         }
 
-        // accept event
-        console.log(tags);
         if (
           tags["p"].length &&
           tags["e"].length > 1 &&
@@ -288,12 +286,10 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     if (!isAssignednextCheckPutEvent) throw Error("Does not first put event.");
 
     const checkedPutEvents = [];
-    let lastCheckedPutEventDisc: Disc = "b";
+    let lastCheckedPutEventDisc: Disc | null = null;
     let lastCheckPassedPutEvent: Event = gamePutEvents[0];
 
     const hitsory: number[][] = [];
-
-    console.log(checkedPutEvents.length, gamePutEvents.length);
 
     while (
       checkedPutEvents.length <= gamePutEvents.length &&
@@ -319,6 +315,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
           lastCheckPassedPutEvent = nextCheckPutEvent;
           hitsory.push(body.put);
         }
+        console.log("oK ", ok);
       }
 
       // チェック済みであることをマーク
