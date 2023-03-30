@@ -34,14 +34,21 @@ export const RoomPage = () => {
 
   const navigate = useNavigate();
 
-  useOnReadyNostrClient(() => {
-    getPublicKey().then(setPublicKey);
-    if (!roomId) {
-      createRoom().then((ev) => {
-        navigate(`/rooms/${ev.id}`);
-      });
+  useOnReadyNostrClient(
+    () => {
+      if (roomId) {
+        getPublicKey().then(setPublicKey);
+      } else {
+        createRoom().then((ev) => {
+          navigate(`/rooms/${ev.id}`);
+        });
+      }
+    },
+    [window, roomId],
+    () => {
+      alert("Need NIP-07 Extension.");
     }
-  }, [window, roomId]);
+  );
 
   const [joinRequestStatus, setJoinRequestStatus] = useState<
     "sending" | "sent"
