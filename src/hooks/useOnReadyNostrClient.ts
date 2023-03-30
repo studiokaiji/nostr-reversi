@@ -2,7 +2,8 @@ import { useEffect } from "react";
 
 export const useOnReadyNostrClient = (
   effect: React.EffectCallback,
-  deps: React.DependencyList = []
+  deps: React.DependencyList = [],
+  onDoesNotExist?: () => void
 ) => {
   useEffect(() => {
     if (!window) {
@@ -15,7 +16,11 @@ export const useOnReadyNostrClient = (
       if (isCalledHandler) {
         return;
       }
-      effect();
+      if ((window as any).nostr) {
+        effect();
+      } else {
+        onDoesNotExist && onDoesNotExist();
+      }
     };
 
     if ((window as any).nostr) {
