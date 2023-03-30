@@ -3,7 +3,6 @@ import { useUserKey } from "@/hooks/useUserKey";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Reversi } from "@/components/Reversi";
-import { NothelloLogo } from "@/components/helpers/NothelloLogo";
 import { useOnReadyNostrClient } from "@/hooks/useOnReadyNostrClient";
 import { useUserProfiles } from "@/hooks/useUserProfiles";
 import { ProfileCard } from "@/components/helpers/ProfileCard";
@@ -70,7 +69,6 @@ export const RoomPage = () => {
 
   return (
     <div>
-      <NothelloLogo />
       <div>{}</div>
       <div
         css={{
