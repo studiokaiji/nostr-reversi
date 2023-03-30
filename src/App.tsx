@@ -5,6 +5,7 @@ import { IndexPage } from "./pages";
 import { RoomPage } from "./pages/rooms/room";
 import { RoomsPage } from "./pages/rooms";
 import { NothelloLogo } from "./components/helpers/NothelloLogo";
+import { NotFoundPage } from "./pages/NotFound";
 
 /** @jsxImportSource @emotion/react */
 
@@ -20,6 +21,7 @@ function App() {
             <Route path=":roomId" element={<RoomPage />} />
           </Route>
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
