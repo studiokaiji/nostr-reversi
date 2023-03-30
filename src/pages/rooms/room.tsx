@@ -26,7 +26,7 @@ export const RoomPage = () => {
   const [publicKey, setPublicKey] = useState("");
 
   const publicKeys = useMemo(
-    () => Object.values(room?.players || []).filter((v) => v),
+    () => [room?.players.b || "", room?.players.w || ""],
     [room?.players]
   );
 
@@ -72,6 +72,10 @@ export const RoomPage = () => {
 
   if (joinRequestStatus === "sending") {
     return <div>Sending Join Request...</div>;
+  }
+
+  if (!room) {
+    return <div>Loading Room...</div>;
   }
 
   return (

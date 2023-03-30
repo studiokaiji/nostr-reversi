@@ -29,8 +29,16 @@ export const useUserProfiles = (pubkeys: string[] = []) => {
       },
     ])
       .then((events) => {
+        const sortedEvents = pubkeys.map((pubkey) =>
+          events.find((ev) => ev.pubkey === pubkey)
+        );
         setOldPubkeys(pubkeys);
-        setProfiles(events.map((ev) => JSON.parse(ev.content)));
+        setProfiles(
+          sortedEvents.map((ev) => {
+            if (!ev) return null;
+            return JSON.parse(ev.content);
+          })
+        );
         setIsLoading(false);
       })
       .catch(() => setIsLoading(false));

@@ -1,5 +1,4 @@
 import { useOnReadyNostrClient } from "./useOnReadyNostrClient";
-import { useLocalRoomStore } from "./useLocalRoomStore";
 import { useRelays } from "./useRelays";
 import {
   CONTENT_BODY_VERSION,
@@ -7,7 +6,7 @@ import {
   KIND,
   RECOMMENDED_RELAY,
 } from "./../constants/nostr";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Event, getEventHash, UnsignedEvent } from "nostr-tools";
 import { useUserKey } from "./useUserKey";
 import {
@@ -210,7 +209,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       if (body.kind === 0) {
         // join request event
         if (
-          tags["e"].length === 1 &&
+          tags["e"].length === 2 &&
           tags["e"][0] === roomId &&
           initialEvent.pubkey !== ev.pubkey
         ) {
@@ -218,7 +217,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
           return;
         }
 
-        // accept event
         if (
           tags["p"].length &&
           tags["e"].length > 1 &&
@@ -288,7 +286,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     if (!isAssignednextCheckPutEvent) throw Error("Does not first put event.");
 
     const checkedPutEvents = [];
-    let lastCheckedPutEventDisc: Disc = "b";
+    let lastCheckedPutEventDisc: Disc | null = null;
     let lastCheckPassedPutEvent: Event = gamePutEvents[0];
 
     const hitsory: number[][] = [];
@@ -317,6 +315,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
           lastCheckPassedPutEvent = nextCheckPutEvent;
           hitsory.push(body.put);
         }
+        console.log("oK ", ok);
       }
 
       // チェック済みであることをマーク
@@ -425,12 +424,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
             // JoinRequest and AcceptJoinRequest event
             const eTags = tags["e"];
 
-            console.log(
-              eTags.length === 1,
-              eTags[0] === roomId,
-              currentRoom.owner !== e.pubkey
-            );
-
             if (
               eTags.length === 2 &&
               eTags[0] === roomId &&
@@ -489,7 +482,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     );
   };
 
-  const { room, setRoom } = useLocalRoomStore(roomId);
+  const [room, setRoom] = useState<Room>();
   const isGameStartedRef = useRef(false);
 
   useOnReadyNostrClient(() => {
