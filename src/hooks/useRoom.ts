@@ -5,6 +5,7 @@ import {
   CONTENT_BODY_VERSION,
   CREATE_ROOM_E_TAG,
   KIND,
+  RECOMMENDED_RELAY,
 } from "./../constants/nostr";
 import { useRef } from "react";
 import { Event, getEventHash, UnsignedEvent } from "nostr-tools";
@@ -32,7 +33,7 @@ export const createRoom = async (privateKey?: string) => {
   const unsignedEvent: UnsignedEvent = {
     kind: KIND,
     pubkey: await getPublicKey(privateKey),
-    tags: [["e", CREATE_ROOM_E_TAG]],
+    tags: [["e", CREATE_ROOM_E_TAG, RECOMMENDED_RELAY]],
     content: JSON.stringify(initialContentBody),
     created_at: getNostrTimestamp(),
   };
@@ -57,7 +58,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
     const unsignedEvent: UnsignedEvent = {
       kind: KIND,
       pubkey: await getPublicKey(privateKey),
-      tags: [["e", roomId]],
+      tags: [["e", roomId, RECOMMENDED_RELAY]],
       content: JSON.stringify(initialContentBody),
       created_at: getNostrTimestamp(),
     };
@@ -81,7 +82,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       kind: KIND,
       pubkey: await getPublicKey(privateKey),
       tags: [
-        ["e", roomId, requestId],
+        ["e", roomId, RECOMMENDED_RELAY, requestId],
         ["p", opponentPublicKey],
       ],
       content: JSON.stringify(initialContentBody),
@@ -136,7 +137,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       kind: KIND,
       pubkey: await getPublicKey(privateKey),
       tags: [
-        ["e", roomId, room.latestEventId],
+        ["e", roomId, RECOMMENDED_RELAY, room.latestEventId],
         ["p", opponentPublicKey],
       ],
       content: JSON.stringify(contentBody),
@@ -205,7 +206,6 @@ export const useRoom = (roomId = "", privateKey?: string) => {
 
       const tags = parseTags(ev.tags);
       const body = gameContentBodyMap[id];
-
 
       if (body.kind === 0) {
         // join request event
@@ -276,7 +276,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
 
       // 最初のputEventを取得
       if (
-        acceptEvents.findIndex(({ id }) => eTags[1] === id) !== -1 &&
+        acceptEvents.findIndex(({ id }) => eTags[2] === id) !== -1 &&
         putEv.pubkey === initialEvent.pubkey
       ) {
         nextCheckPutEvent = putEv;
@@ -327,7 +327,7 @@ export const useRoom = (roomId = "", privateKey?: string) => {
       const eTags = nextCheckPutEvent.tags.filter(
         (tagList) => tagList[0] === "e"
       )[0];
-      const nextPutEventId = eTags[1];
+      const nextPutEventId = eTags[2];
       nextCheckPutEvent = idToPutEventMap[nextPutEventId];
     }
 
@@ -425,8 +425,14 @@ export const useRoom = (roomId = "", privateKey?: string) => {
             // JoinRequest and AcceptJoinRequest event
             const eTags = tags["e"];
 
+            console.log(
+              eTags.length === 1,
+              eTags[0] === roomId,
+              currentRoom.owner !== e.pubkey
+            );
+
             if (
-              eTags.length === 1 &&
+              eTags.length === 2 &&
               eTags[0] === roomId &&
               currentRoom.owner !== e.pubkey
             ) {

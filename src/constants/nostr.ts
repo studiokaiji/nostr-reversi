@@ -12,3 +12,4 @@ export const RELAYS_FOR_PROFILE = [
   "wss://nostr.sandwich.farm",
   "wss://relay.nostr.bg",
 ];
+export const RECOMMENDED_RELAY = "wss://nothello-relay.studiokaiji.com";
